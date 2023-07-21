@@ -81,14 +81,6 @@ public class Main {
                 """);
         Scanner optionScan = new Scanner(System.in);
 
-
-//        while (option.isEmpty()) {
-//            System.out.println("empty");
-//            option = scan.nextLine();
-//        }
-
-//        while(scan.hasNextLine()){
-//    }
         String option = optionScan.nextLine();
         switch (option.toLowerCase()) {
             case "add":
@@ -124,7 +116,7 @@ public class Main {
         StringBuilder sb = new StringBuilder();
 
         String description = addScan.nextLine();
-        while (description.trim().isEmpty()) {
+        while (description.isBlank()) {
             System.out.println("No description.");
             description = addScan.nextLine();
         }
@@ -147,8 +139,6 @@ public class Main {
 
         tasks = Arrays.copyOf(tasks, tasks.length + 1);
         tasks[tasks.length - 1] = sb.toString().split("\n");
-
-        addScan.reset();
     }
 
 
@@ -162,15 +152,12 @@ public class Main {
         }
         int number = Integer.parseInt(removeScan.nextLine()) - 1;
 
-
         try {
             tasks = ArrayUtils.remove(tasks, number);
         } catch (IndexOutOfBoundsException e) {
             System.out.println("Index is out of boundary. Insert number from: 0 to " + tasks.length);
             removeTask();
         }
-
-        removeScan.reset();
     }
 
 
@@ -191,8 +178,9 @@ public class Main {
     public static boolean validateDate(String str) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.ENGLISH);
 
+
         try {
-            LocalDate date = LocalDate.parse(str, formatter);
+            LocalDate.parse(str, formatter);
         } catch (DateTimeParseException e) {
             return false;
         }

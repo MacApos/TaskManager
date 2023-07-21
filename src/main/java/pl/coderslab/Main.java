@@ -1,5 +1,7 @@
 package pl.coderslab;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,7 +28,7 @@ public class Main {
 
         optionSelect();
 //        addTask();
-
+        printResults(tasks);
     }
 
 
@@ -64,10 +66,7 @@ public class Main {
             System.err.println(csvPath.toAbsolutePath() + " does not exists.");
         }
 
-        for (String[] data : tasks) {
-            System.out.println(Arrays.toString(data));
-        }
-        System.out.println();
+        printResults(tasks);
         return tasks;
 
     }
@@ -78,8 +77,9 @@ public class Main {
                 1. add
                 2. list
                 3. remove
-                4. exit""");
-        Scanner scan = new Scanner(System.in);
+                4. exit
+                """);
+        Scanner optionScan = new Scanner(System.in);
 
 
 //        while (option.isEmpty()) {
@@ -89,84 +89,103 @@ public class Main {
 
 //        while(scan.hasNextLine()){
 //    }
-        String option = scan.nextLine();
+        String option = optionScan.nextLine();
         switch (option.toLowerCase()) {
             case "add":
                 addTask();
-                break;
+                optionSelect();
 
             case "list":
-                System.out.println("list");
+                listTask();
                 break;
 
             case "remove":
-                System.out.println("remove");
-                break;
+                removeTask();
+                optionSelect();
 
             case "exit":
-                System.out.println("Are you sure you want to exit? y/n");
-                String confiramtion = scan.nextLine();
-                if (confiramtion.equals("y")) {
-                    break;
-                } else if (confiramtion.equals("n")) {
-                    optionSelect();
-                } else {
-                    while (!confiramtion.equals("y") &&
-                            !confiramtion.equals("n")) {
-                        System.err.println("Insert y or n.");
-                        confiramtion = scan.nextLine();
-                    }
-                }
+                exitManager();
                 break;
 
             default:
                 System.out.println("Please select a correct option.");
-
+                optionSelect();
         }
+        optionScan.reset();
+    }
+
+    private static void listTask() {
 
     }
 
     public static void addTask() {
-        Scanner scan = new Scanner(System.in);
+        Scanner addScan = new Scanner(System.in);
         System.out.println("Please add description.");
         StringBuilder sb = new StringBuilder();
 
-        String description = scan.nextLine();
+        String description = addScan.nextLine();
         while (description.trim().isEmpty()) {
             System.out.println("No description.");
-            description = scan.nextLine();
+            description = addScan.nextLine();
         }
         sb.append(description).append("\n");
 
         System.out.println("Add date in dd-MM-yyyy format.");
-        String date = scan.nextLine();
+        String date = addScan.nextLine();
         while (!validateDate(date)) {
             System.out.println("Please insert date in dd-MM-yyyy format.");
-            date = scan.nextLine();
+            date = addScan.nextLine();
         }
         sb.append(date).append("\n");
 
         System.out.println("Is this task important true/false.");
-        while (!scan.hasNextBoolean()) {
+        while (!addScan.hasNextBoolean()) {
             System.out.println("Inset true or false");
-            scan.nextLine();
+            addScan.nextLine();
         }
-        sb.append(scan.nextLine()).append("\n");
+        sb.append(addScan.nextLine()).append("\n");
 
         tasks = Arrays.copyOf(tasks, tasks.length + 1);
         tasks[tasks.length - 1] = sb.toString().split("\n");
-        for (String[] task : tasks) {
-            System.out.println(Arrays.toString(task));
-        }
+
+        addScan.reset();
     }
 
-    public static boolean validateInt(String str) {
-        try {
-            Double.parseDouble(str);
-        } catch (NullPointerException | NumberFormatException e) {
-            return false;
+
+    public static void removeTask() {
+        Scanner removeScan = new Scanner(System.in);
+
+        System.out.println("Select number of task to be remove.");
+        while (!removeScan.hasNextInt()) {
+            System.out.println("Insert number.");
+            removeScan.nextLine();
         }
-        return true;
+        int number = Integer.parseInt(removeScan.nextLine()) - 1;
+
+
+        try {
+            tasks = ArrayUtils.remove(tasks, number);
+        } catch (IndexOutOfBoundsException e) {
+            System.out.println("Index is out of boundary. Insert number from: 0 to " + tasks.length);
+            removeTask();
+        }
+
+        removeScan.reset();
+    }
+
+
+    public static void exitManager() {
+        Scanner exitScan = new Scanner(System.in);
+        System.out.println("Are you sure you want to exit? y/n");
+        String confiramtion = "";
+        while (!confiramtion.equals("y") &&
+                !confiramtion.equals("n")) {
+            confiramtion = exitScan.nextLine();
+            System.out.println("Insert y or n.");
+        }
+        if (confiramtion.equals("n")) {
+            optionSelect();
+        }
     }
 
     public static boolean validateDate(String str) {
@@ -178,6 +197,13 @@ public class Main {
             return false;
         }
         return true;
+    }
+
+    public static void printResults(String[][] results) {
+        System.out.println();
+        for (String[] task : results) {
+            System.out.println(Arrays.toString(task));
+        }
     }
 }
 

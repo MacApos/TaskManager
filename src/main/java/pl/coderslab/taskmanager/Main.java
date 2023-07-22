@@ -1,4 +1,4 @@
-package pl.coderslab;
+package pl.coderslab.taskmanager;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -92,7 +92,7 @@ public class Main {
                     break;
 
                 case "exit":
-                    isRuning = exitManager(isRuning);
+                    isRuning = exitManager();
                     break;
 
                 case "quit":
@@ -197,7 +197,7 @@ public class Main {
     }
 
 
-    public static boolean exitManager(boolean isRuning) {
+    public static boolean exitManager() {
         System.out.println("Are you sure you want to exit? y/n");
         String confirmation = scan.nextLine().trim().toLowerCase();
 
@@ -256,4 +256,3 @@ public class Main {
         }
     }
 }
-

@@ -2,12 +2,10 @@ package pl.coderslab;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -15,194 +13,246 @@ import java.util.*;
 
 
 public class Main {
-    static String[][] tasks = new String[0][3];
+    static Scanner scan = new Scanner(System.in);
+    static final String dirPath = "/home/maciej/Documents/Zasoby_do_projektu/05_attachment_Zasoby do projektu.pl/";
 
     public static void main(String[] args) {
-        String[][] initialData;
+        String[][] tasks = new String[0][3];
+
         try {
-            initialData = uploadData();
+            tasks = uploadData(tasks);
         } catch (IOException e) {
-            System.err.println("Error while running uploadData methode: " +
-                    e.getMessage());
+            System.err.println("Error while running uploadData methode: " + e.getMessage());
         }
 
-        optionSelect();
-//        addTask();
-        printResults(tasks);
+        tasks = optionSelect(tasks);
+        saveFile("newTasks.csv", tasks);
     }
 
 
-    public static String[][] uploadData() throws IOException {
-        Path csvPath = Paths.get("/home/maciej/Documents/Zasoby_do_projektu/" +
-                "05_attachment_Zasoby do projektu.pl/tasks.csv");
+    public static String[][] uploadData(String[][] tasks) throws IOException {
+        Path csvPath = Paths.get(dirPath, "tasks.csv");
 
         if (!Files.exists(csvPath)) {
             System.err.println(csvPath.toAbsolutePath() + " doesn't exists.");
         }
 
-        System.out.print("Uploading initial file...");
-//        int wait = 0;
-//        while (wait != 3){
-//            try {
-//                Thread.sleep(500);
-//                System.out.print(".");
-//                wait ++;
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-
+        System.out.print("Uploading initial file");
+        int wait = 0;
+        while (wait != 3) {
+            try {
+                System.out.print(".");
+                Thread.sleep(250);
+                wait++;
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
         System.out.println();
 
-
+        StringBuilder sb = new StringBuilder();
         try (Scanner file = new Scanner(csvPath)) {
             while (file.hasNextLine()) {
-                String newLine = file.nextLine();
-                tasks = Arrays.copyOf(tasks, tasks.length + 1);
-                tasks[tasks.length - 1] = newLine.split(", ");
-
+                sb.append(file.nextLine()).append("\n");
             }
         } catch (IOException e) {
             System.err.println(csvPath.toAbsolutePath() + " does not exists.");
         }
 
-        printResults(tasks);
-        return tasks;
-
-    }
-
-    public static void optionSelect() {
-        System.out.println("""
-                Choose your option:
-                1. add
-                2. list
-                3. remove
-                4. exit
-                """);
-        Scanner optionScan = new Scanner(System.in);
-
-
-//        while (option.isEmpty()) {
-//            System.out.println("empty");
-//            option = scan.nextLine();
-//        }
-
-//        while(scan.hasNextLine()){
-//    }
-        String option = optionScan.nextLine();
-        switch (option.toLowerCase()) {
-            case "add":
-                addTask();
-                optionSelect();
-
-            case "list":
-                listTask();
-                break;
-
-            case "remove":
-                removeTask();
-                optionSelect();
-
-            case "exit":
-                exitManager();
-                break;
-
-            default:
-                System.out.println("Please select a correct option.");
-                optionSelect();
+        String[] srcArr = sb.toString().split("\n");
+        tasks = Arrays.copyOf(tasks, srcArr.length);
+        for (int arrIdx = 0; arrIdx < srcArr.length; arrIdx++) {
+            tasks[arrIdx] = srcArr[arrIdx].split(", ");
         }
-        optionScan.reset();
+        return tasks;
     }
 
-    private static void listTask() {
+    public static String[][] optionSelect(String[][] tasks) {
+        boolean isRuning = true;
+        boolean initialInfo = true;
 
+        while (isRuning) {
+            if (initialInfo) {
+                System.out.println("Choose your option:");
+                printOption();
+            }
+
+            String option = scan.nextLine().trim().toLowerCase();
+            switch (option.toLowerCase()) {
+                case "add":
+                    tasks = addTask(tasks);
+                    break;
+
+                case "list":
+                    listTask(tasks);
+                    break;
+
+                case "remove":
+                    tasks = removeTask(tasks);
+                    break;
+
+                case "exit":
+                    isRuning = exitManager(isRuning);
+                    break;
+
+                case "quit":
+                    System.out.println("You are already in menu.");
+                    break;
+
+                default:
+                    initialInfo = false;
+                    System.out.println("Please select a correct option: ");
+                    printOption();
+            }
+        }
+        return tasks;
     }
 
-    public static void addTask() {
-        Scanner addScan = new Scanner(System.in);
-        System.out.println("Please add description.");
+    private static void listTask(String[][] tasks) {
+        StringBuilder sb = new StringBuilder();
+        for (int taskIdx = 0; taskIdx < tasks.length; taskIdx++) {
+            sb.append(taskIdx + 1).append(".\t");
+            for (int colIdx = 0; colIdx < tasks[taskIdx].length; colIdx++) {
+                sb.append(tasks[taskIdx][colIdx]);
+                if (colIdx < tasks[taskIdx].length - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("\n");
+        }
+        System.out.println(sb);
+    }
+
+    public static String[][] addTask(String[][] tasks) {
         StringBuilder sb = new StringBuilder();
 
-        String description = addScan.nextLine();
+        System.out.println("Please add description.");
+        String description = scan.nextLine();
+        if (isQuit(description)) {
+            return tasks;
+        }
         while (description.trim().isEmpty()) {
             System.out.println("No description.");
-            description = addScan.nextLine();
+            description = scan.nextLine();
         }
         sb.append(description).append("\n");
 
-        System.out.println("Add date in dd-MM-yyyy format.");
-        String date = addScan.nextLine();
-        while (!validateDate(date)) {
-            System.out.println("Please insert date in dd-MM-yyyy format.");
-            date = addScan.nextLine();
+        System.out.println("Add date in yyyy-MM-dd format.");
+        String date = scan.nextLine();
+        while (!isDate(date)) {
+            if (isQuit(date)) {
+                return tasks;
+            }
+            System.out.println("Please insert date in yyyy-MM-dd format.");
+            date = scan.nextLine();
         }
         sb.append(date).append("\n");
 
         System.out.println("Is this task important true/false.");
-        while (!addScan.hasNextBoolean()) {
+        while (!scan.hasNextBoolean()) {
+            if (isQuit(scan.nextLine())) {
+                return tasks;
+            }
             System.out.println("Inset true or false");
-            addScan.nextLine();
+//            scan.nextLine();
         }
-        sb.append(addScan.nextLine()).append("\n");
+        sb.append(scan.nextLine()).append("\n");
 
         tasks = Arrays.copyOf(tasks, tasks.length + 1);
         tasks[tasks.length - 1] = sb.toString().split("\n");
 
-        addScan.reset();
+        return tasks;
     }
 
-
-    public static void removeTask() {
-        Scanner removeScan = new Scanner(System.in);
-
+    public static String[][] removeTask(String[][] tasks) {
         System.out.println("Select number of task to be remove.");
-        while (!removeScan.hasNextInt()) {
-            System.out.println("Insert number.");
-            removeScan.nextLine();
+        boolean repeat = true;
+        int number = 0;
+
+        while (repeat) {
+            while (!scan.hasNextInt()) {
+                if (isQuit(scan.nextLine())) {
+                    return tasks;
+                }
+                System.out.println("Insert number.");
+            }
+
+            number = Integer.parseInt(scan.nextLine().trim());
+            System.out.println();
+            if (tasks.length > 0) {
+                if (number < 0 || number > tasks.length - 1) {
+                    System.out.println("Number is out of bond, insert number from 0 to " + (tasks.length - 1));
+                    continue;
+                }
+            } else {
+                System.out.println("List of tasks is empty. Add new tasks.");
+                return tasks;
+            }
+
+            repeat = false;
         }
-        int number = Integer.parseInt(removeScan.nextLine()) - 1;
 
-
-        try {
-            tasks = ArrayUtils.remove(tasks, number);
-        } catch (IndexOutOfBoundsException e) {
-            System.out.println("Index is out of boundary. Insert number from: 0 to " + tasks.length);
-            removeTask();
-        }
-
-        removeScan.reset();
+        tasks = ArrayUtils.remove(tasks, number);
+        return tasks;
     }
 
 
-    public static void exitManager() {
-        Scanner exitScan = new Scanner(System.in);
+    public static boolean exitManager(boolean isRuning) {
         System.out.println("Are you sure you want to exit? y/n");
-        String confiramtion = "";
-        while (!confiramtion.equals("y") &&
-                !confiramtion.equals("n")) {
-            confiramtion = exitScan.nextLine();
+        String confirmation = scan.nextLine().trim().toLowerCase();
+
+        while (!confirmation.equals("y") &&
+                !confirmation.equals("n")) {
+            if (isQuit(confirmation)) {
+                return true;
+            }
             System.out.println("Insert y or n.");
+            confirmation = scan.nextLine();
         }
-        if (confiramtion.equals("n")) {
-            optionSelect();
-        }
+        return !confirmation.equals("y");
     }
 
-    public static boolean validateDate(String str) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.ENGLISH);
+    public static boolean isQuit(String str) {
+        return str.trim().equalsIgnoreCase("quit");
+    }
+
+    public static boolean isDate(String str) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH);
 
         try {
-            LocalDate date = LocalDate.parse(str, formatter);
+            LocalDate.parse(str, formatter);
         } catch (DateTimeParseException e) {
             return false;
         }
         return true;
     }
 
-    public static void printResults(String[][] results) {
-        System.out.println();
-        for (String[] task : results) {
-            System.out.println(Arrays.toString(task));
+    public static void printOption() {
+        System.out.println("""
+                1. add
+                2. list
+                3. remove
+                4. exit
+                --- quit to return to menu ---""");
+    }
+
+    public static void saveFile(String fileName, String[][] tasks) {
+        Path filePath = Paths.get(dirPath, fileName);
+        System.out.println("Wrtiting to file: " + filePath);
+        StringBuilder sb = new StringBuilder();
+        for (String[] task : tasks) {
+            for (int colIdx = 0; colIdx < task.length; colIdx++) {
+                sb.append(task[colIdx]);
+                if (colIdx < task.length - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("\n");
+        }
+        try {
+            Files.writeString(filePath, sb);
+        } catch (IOException ex) {
+            System.err.println("File already exists.");
         }
     }
 }
